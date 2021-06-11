@@ -39,14 +39,13 @@ module.exports = function (app) {
       //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
       /*You can send a GET request to /api/books and receive a JSON response representing all the books. 
       The JSON response will be an array of objects with each object (book) containing title, _id, and commentcount properties.*/
-        
       Library.find({}, (err, data) => {
-        if (err) return res.json("no books exist.");
+        if (err) return res.json("no books exist");
         return res.json(data);
       })
     })
     
-    .post(function (req, res){
+    .post(function (req, res) {
       let title = req.body.title; //Given by default
       //response will contain new book object including atleast _id and title
       /*You can send a POST request to /api/books with title as part of the form data to add a book. 
@@ -55,17 +54,18 @@ module.exports = function (app) {
       let newBook = new Library({book_title: title});
       if (title && title.trim() !== "") {
         newBook.save((err, data) => {
-          if (err) return err;
-          else {
+          if (!err && data) {
             let result = {
               _id: data._id,
               title: data.book_title
             };
             return res.json(result);
-          }
+          } 
+          else {
+            return err
+          };
         })
-        
-      } else return res.json("missing required field title.")
+      } else return res.json("missing required field title")
     })
     
     .delete(function(req, res){
@@ -73,8 +73,13 @@ module.exports = function (app) {
       /* You can send a DELETE request to /api/books to delete all books in the database. 
       The returned response will be the string 'complete delete successful' if successful.*/
       Library.deleteMany({}, (err, result) => {
-        if (err) return err;
-        else return res.json('complete delete successful');
+        if (err && !result) {
+          return err
+        }
+        else 
+        {
+          return res.json("complete delete successful");
+        }
       });    
     });
 
@@ -84,12 +89,23 @@ module.exports = function (app) {
       let bookid = req.params.id;  //Given by default
       //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
     
-      /*      You can send a GET request to /api/books/{_id} to retrieve a single object of a book containing the properties title, _id, 
-      and a comments array (empty array if no comments present). If no book is found, return the string no book exists.*/
-      Library.find({ _id: bookid }, (err, data) => {
-        if (err) return res.json("no book exists.");
-        return res.json(data);
-      })
+      /*      You can send a GET request to /api/books/{_id} to retrieve a single object of a book containing the properties title, _id, and a comments array (empty array if no comments present). If no book is found, return the string no book exists.*/
+
+      if (bookid && bookid.trim() !== "") {
+        Library.find({ _id: bookid }, (err, data) => {
+          if (!err && data.length > 0) {
+            return res.json({
+              _id: data[0]['_id'],
+              title: data[0]['book_title'],
+              comments: data[0]['comments']
+            });
+          } else {
+            return res.json("no book exists");
+          }
+        })
+      } else {
+          res.redirect('/api/books');
+      }
     })
     
     .post(function(req, res){
@@ -101,22 +117,29 @@ module.exports = function (app) {
       The returned response will be the books object similar to GET /api/books/{_id} request in an earlier test. 
       If comment is not included in the request, return the string missing required field comment. 
       If no book is found, return the string no book exists.*/
-
-      if (bookid && bookid.trim() !== "" && comment && comment.trim() !== "") {
-         let update = {
-           $push: {comments: comment}, 
-           $inc: {commentcount: 1}
-         };
-         Library.findByIdAndUpdate(bookid, update, {new: true}, (err, data) => {
-           // If there is no error
-           if(!err && data) {
-             res.redirect('/api/books/' + bookid);
-           }  
-           else if(err) return res.json("no book exists.")
-         })
-      }
-      else if (!comment && comment.trim() === "") {
-        return res.json("missing required field comment.")
+      if (bookid && bookid.trim() !== ""){
+          if (comment && comment.trim() !== "") {
+            let update = {
+              $push: {comments: comment}, 
+              $inc: {commentcount: 1}
+            };
+            Library.findByIdAndUpdate(bookid, update, {new: true}, (err, data) => {
+              // If there is no error
+              if(!err && data) {
+                return res.json({
+                  _id: data['_id'],
+                  title: data['book_title'],
+                  comments: data['comments']
+                });
+              }  
+              else return res.json("no book exists");
+            })
+          }
+          else {
+            return res.json("missing required field comment")
+          }        
+      } else {
+          res.redirect('/api/books'); 
       }
     })
     
@@ -127,12 +150,17 @@ module.exports = function (app) {
       /*You can send a DELETE request to /api/books/{_id} to delete a book from the collection. 
         The returned response will be the string delete successful if successful. 
         If no book is found, return the string no book exists.*/
-      Library.deleteOne({_id: bookid}, (err, result) => {
-        console.log('bookid: ' + bookid);
-        console.log('result: '+ result);
-        if (err) return res.json("no book exists");
-        else return res.json("delete successful");
-      })
+
+      if (bookid && bookid.trim() !== "") {
+        Library.deleteOne({_id: bookid}, (err, result) => {
+          if (!err && result.deletedCount !== 0) {
+            return res.json("delete successful")
+          } else {
+            return res.json("no book exists")
+          };
+        })
+      } else {
+          res.redirect('/api/books'); 
+      }
     });
-  
 };

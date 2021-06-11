@@ -61,7 +61,7 @@ suite('Functional Tests', function() {
         .send({})
         .end(function(err, res) {
           assert.equal(res.status, 200, "Status should be 200");
-          assert.equal(res.body,'missing required field title.', "Error message should be shown when no title given");
+          assert.equal(res.body,'missing required field title', "Error message should be shown when no title given");
           done();
         })
       });
@@ -74,7 +74,6 @@ suite('Functional Tests', function() {
       test('Test GET /api/books',  function(done){
         chai.request(server)
         .get('/api/books')
-        .query({})
         .end(function(err, res){
             assert.equal(res.status, 200, "Status should be 200");
             assert.isArray(res.body, 'Response project should be an array: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}');
@@ -98,22 +97,21 @@ suite('Functional Tests', function() {
         .query({})
         .end(function(err, res){
             assert.equal(res.status, 200, "Status should be 200");
-            assert.equal(res.body,'no book exists.', "Error message should be shown when ID not in database");
+            assert.equal(res.body,'no book exists', "Error message should be shown when ID not in database");
             done();
         })
       });
       
       test('Test GET /api/books/[id] with valid id in db',  function(done){
-        let test_id = "60c3a857a2856f623c50d90a";
+        let test_id = "60c3df256b8e960d2b6da949";
         chai.request(server)
         .get('/api/books/' + test_id)
         .query({})
         .end(function(err, res){
             assert.equal(res.status, 200, "Status should be 200");
-            assert.property(res.body[0], '_id', 'Response object should contain an ID field.');
-            assert.property(res.body[0], 'book_title', 'Response object should contain book title.');
-            assert.property(res.body[0], 'comments', 'Response object should contain comments field.');
-            assert.property(res.body[0], 'commentcount', 'Response object should contain a comment count field.');
+            assert.property(res.body, '_id', 'Response object should contain an ID field.');
+            assert.property(res.body, 'title', 'Response object should contain book title.');
+            assert.property(res.body, 'comments', 'Response object should contain comments field.');
             done();
         })
       });
@@ -124,7 +122,7 @@ suite('Functional Tests', function() {
     suite('POST /api/books/[id] => add comment/expect book object with id', function(){
       
       test('Test POST /api/books/[id] with comment', function(done){
-        let test_id = "60c3a857a2856f623c50d90a";
+        let test_id = "60c3df256b8e960d2b6da949";
         let test_comment = 'Chai Test Comment';
         chai.request(server)
         .post('/api/books/' + test_id)
@@ -134,14 +132,13 @@ suite('Functional Tests', function() {
         })
         .end(function(err, res) {
           assert.equal(res.status, 200, "Status should be 200");
-          assert.include(res.body[0].comments, test_comment, "Comment array should include the new comment");
-          assert.notEqual(res.body[0].commentcount, 0, "Comment count should be more than 0");
+          assert.include(res.body.comments, test_comment, "Comment array should include the new comment");
           done();
         })
       });
 
       test('Test POST /api/books/[id] without comment field', function(done){
-        let test_id = "60c3a857a2856f623c50d90a";
+        let test_id = "60c3df256b8e960d2b6da949";
         let test_comment = '';
         chai.request(server)
         .post('/api/books/' + test_id)
@@ -151,7 +148,7 @@ suite('Functional Tests', function() {
         })
         .end(function(err, res) {
           assert.equal(res.status, 200, "Status should be 200");
-          assert.equal(res.body,'missing required field comment.', "Error message should be shown when comment is not provided.");
+          assert.equal(res.body,'missing required field comment', "Error message should be shown when comment is not provided.");
           done();
         })
       });
@@ -167,7 +164,7 @@ suite('Functional Tests', function() {
         })
         .end(function(err, res) {
           assert.equal(res.status, 200, "Status should be 200");
-          assert.equal(res.body,'no book exists.', "Error message should be shown when ID is not in database.");
+          assert.equal(res.body,'no book exists', "Error message should be shown when ID is not in database.");
           done();
         })
       });
@@ -177,7 +174,7 @@ suite('Functional Tests', function() {
     suite('DELETE /api/books/[id] => delete book object id', function() {
 
       test('Test DELETE /api/books/[id] with valid id in db', function(done){
-        let test_id = "60c3a85da2856f623c50d90b";
+        let test_id = "60c3df456b8e960d2b6da94b";
         chai.request(server)
         .delete('/api/books/' + test_id)
         .send({
